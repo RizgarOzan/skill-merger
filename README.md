@@ -1,18 +1,31 @@
 # Skill Merger
 
 [![Validate](https://github.com/RizgarOzan/skill-merger/actions/workflows/validate.yml/badge.svg)](https://github.com/RizgarOzan/skill-merger/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![skills.sh](https://skills.sh/b/RizgarOzan/skill-merger)](https://skills.sh/RizgarOzan/skill-merger)
 
-Install skills for a while and you end up with three Unity UI skills, two commit skills and four design-review skills that half overlap. The agent picks the wrong one, or loads two that disagree, and every description eats context on every turn.
+**English** · [Türkçe](README.tr.md)
 
-Skill Merger folds a group of skills that cover the same thing into one. Nothing gets lost quietly: every rule, step and script from every source gets a row in a ledger that says where it went or why it was dropped. When two sources disagree, you decide. The old skills go to an archive folder, not the trash.
+Install skills for a few months and you end up with three Unity UI skills, two commit skills and four design-review skills that half overlap. The agent loads the wrong one, or two that disagree, and every one of those descriptions sits in context on every turn.
 
-It's plain Markdown plus one Python script with no dependencies, so it works with any agent that supports skills: Claude Code, Claude Desktop, Codex, Cursor, OpenCode.
+Skill Merger folds a group like that into one skill. Nothing disappears quietly: every rule, step and script from every source gets a row in a ledger saying where it went, or why it was dropped. When two sources disagree, you decide. The old skills go to an archive folder, not the trash.
 
-*Türkçe: Aynı konuda birden fazla skill'in varsa (üç Unity UI skill'i, iki commit skill'i...) bunları tek bir skill'de birleştirir. Her kaynaktaki her kural ve script için nereye gittiğini ya da neden atıldığını yazan bir kayıt tutar, çelişkilerde sana sorar, eski skilleri silmez, arşive taşır.*
+It's plain Markdown plus one Python script with no dependencies, so it works with any agent that reads skills: Claude Code, Claude Desktop, Codex, Cursor, OpenCode.
+
+## Contents
+
+- [Install](#install)
+- [Use](#use)
+- [What it does](#what-it-does)
+- [The ledger](#the-ledger)
+- [The helper script](#the-helper-script)
+- [Safety](#safety)
+- [FAQ](#faq)
+- [Contributing](#contributing)
 
 ## Install
 
-With the skills CLI:
+With the [skills CLI](https://skills.sh):
 
 ```bash
 npx skills add RizgarOzan/skill-merger --global
@@ -25,11 +38,11 @@ As a Claude Code plugin:
 /plugin install skill-merger@skill-merger
 ```
 
-By hand: copy this folder to `~/.claude/skills/skill-merger/` (or your agent's skill folder).
+By hand: copy this folder to `~/.claude/skills/skill-merger/`, or to your agent's skill folder.
 
 ## Use
 
-Ask in plain words:
+Just ask:
 
 ```text
 I have too many UI skills, merge the ones that overlap
@@ -40,42 +53,96 @@ Merge unity-ui, unity-ui-toolkit and ui-uitk into one skill called unity-ui
 ```
 
 ```text
-/skill-merger
+Which of my skills overlap?
 ```
 
-What happens:
+Or call it directly with `/skill-merger` (`/skill-merger:skill-merger` when installed as a plugin).
 
-1. Inventory. Lists every skill you have: your own, project skills, and plugin skills.
-2. Clusters. Suggests groups that overlap. You confirm which ones to merge and what to call the result.
-3. Read. Reads every file of every source, not just `SKILL.md`.
-4. Ledger. Splits each source into rules, steps, references and scripts, and marks each one keep, merge, conflict or drop. All conflicts come to you in one question.
-5. Write. Builds the new skill: shared rules in `SKILL.md`, the parts only some requests need in `references/`, scripts in `scripts/`.
-6. Verify. Runs the checker, walks the ledger, and checks that whatever used to trigger each old skill still triggers the new one.
-7. Retire. With your OK, moves the old skills to `~/.claude/skills-archive/<date>/`. Moving them back undoes the merge.
+## What it does
 
-Plugin skills can't be edited in place because updates overwrite them. Their content gets copied into the new skill, and you decide whether to disable the plugin.
+| Step | What happens | Who decides |
+|---|---|---|
+| 1. Inventory | Lists every skill you have: your own, project skills, plugin skills | |
+| 2. Clusters | Suggests groups that overlap and a name for each merged skill | **you** confirm |
+| 3. Read | Reads every file of every source, not just `SKILL.md` | |
+| 4. Ledger | Splits each source into units and gives each one a verdict | **you** settle conflicts |
+| 5. Write | Shared rules go in `SKILL.md`, the rest in `references/`, scripts in `scripts/` | |
+| 6. Verify | Runs the checker, walks the ledger, checks the old triggers still fire | |
+| 7. Retire | Moves the old skills to `~/.claude/skills-archive/` | **you** approve |
+
+The merged skill ends up shaped like this:
+
+```
+unity-ui/
+├── SKILL.md              shared rules and a "which file to read" table
+├── references/
+│   ├── choosing-a-ui-system.md
+│   ├── ugui.md
+│   └── ui-toolkit.md
+├── scripts/
+└── SOURCES.md            who wrote what, under which license
+```
+
+## The ledger
+
+The ledger is what keeps a merge honest. These rows come from a test run that merged three Unity UI skills. The last one shows the `update` verdict, which I added after that run turned up content that was dated but still needed:
+
+| Source | Unit | Verdict | Goes to |
+|---|---|---|---|
+| unity-ui | Quick Start UGUI button | keep | `SKILL.md` § Quick start |
+| unity-ui | UI Systems Comparison table | merge with two other tables | `choosing-a-ui-system.md` |
+| unity-ui | Best Practices 4–7 | keep, they apply to both systems | `SKILL.md` § Rules |
+| unity-ui | `requires: unity-csharp-fundamentals` | drop: that skill isn't installed | — |
+| unity-ui-toolkit | `UxmlFactory` custom control | update: pre-Unity 6 API, kept with a version note | `ui-toolkit.md` |
+
+Each unit gets one of five verdicts: **keep**, **merge**, **update** (still needed but dated), **conflict** (goes to you), or **drop** (with a reason). The merge isn't done until every row has one. Afterwards the ledger moves to the archive next to the old skills, so you can always see what happened.
 
 ## The helper script
 
 `scripts/skills.py` also works on its own:
 
 ```bash
-python3 scripts/skills.py inventory          # every installed skill, with word counts
-python3 scripts/skills.py overlap            # groups that look alike
+python3 scripts/skills.py inventory            # every installed skill, with word counts
+python3 scripts/skills.py overlap              # groups that look alike
 python3 scripts/skills.py check path/to/skill  # frontmatter, name, description length, broken links
 ```
 
-`overlap` only compares words in descriptions. It's a starting point, and the agent reads the descriptions before proposing anything to you.
+On my machine, with 88 skills installed, `overlap` found this group among others:
 
-## Development
-
-```bash
-python3 -m unittest discover -s tests -v
-python3 scripts/skills.py check .
+```text
+Cluster 4: linkedin-analyze, linkedin-network, linkedin-post, linkedin-profile
+  0.15  linkedin-analyze ~ linkedin-post: linkedin log own post reach week
+  0.14  linkedin-post ~ linkedin-profile: against linkedin reach rewrite why
 ```
 
-CI runs both, plus `claude plugin validate --strict .` and a skills CLI discovery check.
+It only compares the words in descriptions, so take it as a first guess. The agent reads the descriptions itself before it proposes anything.
+
+## Safety
+
+- It never deletes anything. Old skills are moved to `~/.claude/skills-archive/<date>-<name>/`, and moving them back undoes the merge.
+- It doesn't touch the source folders until the new skill has passed its checks and you've said yes.
+- Plugin skills are never edited, because the next plugin update would overwrite them. Their content is copied into the new skill, and you decide whether to disable the plugin.
+- Skills installed with the skills CLI are removed with `npx skills remove`, so no broken links or lock file entries are left behind.
+- When a source has no license, or another author's license, the merged skill records it in `SOURCES.md` and is marked private-only where needed.
+
+## FAQ
+
+**Does it work with skills I didn't write?**
+Yes. Third-party skills are the usual case. Their authors and licenses are listed in `SOURCES.md`. MIT and Apache content can be merged and shared. Unlicensed content is fine for your own use but shouldn't be published.
+
+**What if two skills give opposite advice?**
+That's a conflict. All conflicts come to you in one question. If nobody's around to answer, the agent picks, marks the row `settled by agent`, and lists those picks first in its report.
+
+**Will the merged skill still fire when the old ones did?**
+That's step 6. For each old skill, the agent writes the request that used to trigger it and checks that the new description covers it. If it can start a subagent, it gets a second opinion so it isn't grading its own work.
+
+**Can I merge just two skills?**
+Sure. A cluster is any two or more.
+
+## Contributing
+
+Bug reports and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
-MIT
+[MIT](LICENSE) © 2026 Rızgar Ozan

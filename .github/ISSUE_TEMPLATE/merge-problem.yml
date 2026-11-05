@@ -1,0 +1,29 @@
+name: Merge problem
+description: A merge lost something, kept the wrong thing, or the merged skill stopped firing
+labels: [merge]
+body:
+  - type: textarea
+    id: sources
+    attributes:
+      label: Which skills did you merge?
+      description: Names, and where they came from (your own, a plugin, the skills CLI) if you know.
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What went wrong?
+      description: What you expected to find in the merged skill, and what you found instead.
+    validations:
+      required: true
+  - type: textarea
+    id: ledger
+    attributes:
+      label: Ledger rows
+      description: Paste the relevant rows from MERGE-LEDGER.md (it's in ~/.claude/skills-archive/<date>-<name>/).
+      render: markdown
+  - type: input
+    id: agent
+    attributes:
+      label: Agent and version
+      placeholder: Claude Code 2.1.x, Codex, Cursor...
