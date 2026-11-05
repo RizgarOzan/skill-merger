@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace-manifest.json",
+  "name": "skill-merger",
+  "owner": {
+    "name": "Rızgar Ozan",
+    "url": "https://github.com/RizgarOzan"
+  },
+  "description": "Install Skill Merger as a Claude Code plugin.",
+  "plugins": [
+    {
+      "name": "skill-merger",
+      "source": "./",
+      "description": "Merge overlapping agent skills from the same category into one skill without losing what any of them did.",
+      "license": "MIT",
+      "keywords": ["skills", "merge", "consolidate", "deduplicate", "cleanup", "agent-skills"]
+    }
+  ]
+}

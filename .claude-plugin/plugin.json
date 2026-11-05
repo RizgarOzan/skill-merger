@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "skill-merger",
+  "description": "Merge overlapping agent skills from the same category into one skill without losing what any of them did.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Rızgar Ozan",
+    "url": "https://github.com/RizgarOzan"
+  },
+  "homepage": "https://github.com/RizgarOzan/skill-merger",
+  "repository": "https://github.com/RizgarOzan/skill-merger",
+  "license": "MIT",
+  "keywords": ["skills", "merge", "consolidate", "deduplicate", "cleanup", "agent-skills"],
+  "skills": ["./"]
+}
